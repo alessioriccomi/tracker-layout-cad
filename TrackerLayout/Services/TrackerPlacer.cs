@@ -20,12 +20,13 @@ public class TrackerPlacer(Database db, Transaction tr, Editor ed)
 
         var terrain = new TerrainInterpolator();
         terrain.LoadFromDatabase(_db, _tr);
-        if (terrain.PointCount == 0)
-            _ed.WriteMessage("\nATTENZIONE: nessun punto 3D trovato — quota Z = 0 per tutti i tracker." +
-                             "\n            Aggiungere DBPoint o Polilinee 3D con quote reali.");
+        if (terrain.PointCount == 0 && terrain.TriangleCount == 0)
+            _ed.WriteMessage("\nATTENZIONE: nessun dato terreno trovato — quota Z = 0 per tutti i tracker." +
+                             "\n  Formati supportati: DBPoint, Polilinee 3D, 3DFACE (mesh).");
         else
-            _ed.WriteMessage($"\n[DBG] Punti terreno caricati: {terrain.PointCount}  " +
-                             $"(Z range: {terrain.ZMin:F2} – {terrain.ZMax:F2} m)");
+            _ed.WriteMessage($"\n[DBG] Terreno: {terrain.PointCount} punti  {terrain.TriangleCount} triangoli  " +
+                             $"Z=[{terrain.ZMin:F2}, {terrain.ZMax:F2}] m  " +
+                             $"Metodo: {(terrain.TriangleCount > 0 ? "baricentrico+IDW" : "IDW")}");
 
         _ed.WriteMessage($"\n[DBG] Lunghezza tracker={p.TrackerLength:F2} m  " +
                          $"Larghezza tracker={p.TrackerWidth:F2} m  " +
