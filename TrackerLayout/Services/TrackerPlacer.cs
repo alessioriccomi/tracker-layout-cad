@@ -24,9 +24,9 @@ public class TrackerPlacer(Database db, Transaction tr, Editor ed)
             _ed.WriteMessage("\nATTENZIONE: nessun dato terreno trovato — quota Z = 0 per tutti i tracker." +
                              "\n  Formati supportati: DBPoint, Polilinee 3D, 3DFACE (mesh).");
         else
-            _ed.WriteMessage($"\n[DBG] Terreno: {terrain.PointCount} punti  {terrain.TriangleCount} triangoli  " +
-                             $"Z=[{terrain.ZMin:F2}, {terrain.ZMax:F2}] m  " +
-                             $"Metodo: {(terrain.TriangleCount > 0 ? "baricentrico+IDW" : "IDW")}");
+            _ed.WriteMessage($"\n[DBG] Terreno: {terrain.PointCount} punti  {terrain.TriangleCount} triangoli" +
+                             $"  Z=[{terrain.ZMin:F2}, {terrain.ZMax:F2}] m" +
+                             $"  Metodo: {(terrain.TriangleCount > 0 ? "baricentrico+IDW (griglia)" : "IDW")}");
 
         _ed.WriteMessage($"\n[DBG] Lunghezza tracker={p.TrackerLength:F2} m  " +
                          $"Larghezza tracker={p.TrackerWidth:F2} m  " +

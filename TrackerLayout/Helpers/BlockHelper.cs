@@ -42,17 +42,17 @@ public static class BlockHelper
         var blockTable = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
         if (!blockTable.Has(BlockName)) return;
 
-        // 1. Elimina tutte le istanze nel model space
-        var modelSpace = (BlockTableRecord)tr.GetObject(
-            SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite);
+        var btrId = blockTable[BlockName];
+        var btr   = (BlockTableRecord)tr.GetObject(btrId, OpenMode.ForRead);
 
-        foreach (ObjectId id in modelSpace.Cast<ObjectId>().ToList())
+        // 1. Elimina tutte le istanze tramite backreference — non scansiona il model space
+        //    (evita di aprire migliaia di 3DFACE dopo EXPLODE di una mesh CADmapper)
+        var refIds = btr.GetBlockReferenceIds(directOnly: true, forceValidity: true);
+        foreach (ObjectId refId in refIds)
         {
-            var obj = tr.GetObject(id, OpenMode.ForRead);
-            if (obj is BlockReference br && br.Name == BlockName)
+            try
             {
-                br.UpgradeOpen();
-                // Colleziona prima, poi cancella — evita eInvalidIndex durante l'iterazione
+                var br = (BlockReference)tr.GetObject(refId, OpenMode.ForWrite);
                 var attIds = br.AttributeCollection.Cast<ObjectId>().ToList();
                 foreach (ObjectId attId in attIds)
                 {
@@ -61,14 +61,15 @@ public static class BlockHelper
                 }
                 br.Erase();
             }
+            catch { /* entità già cancellata o non accessibile */ }
         }
 
         // 2. Elimina le entità della definizione
-        var btr = (BlockTableRecord)tr.GetObject(blockTable[BlockName], OpenMode.ForWrite);
+        btr.UpgradeOpen();
         foreach (ObjectId id in btr.Cast<ObjectId>().ToList())
         {
-            var obj = tr.GetObject(id, OpenMode.ForWrite);
-            obj.Erase();
+            try { tr.GetObject(id, OpenMode.ForWrite).Erase(); }
+            catch { }
         }
 
         // 3. Elimina la definizione stessa

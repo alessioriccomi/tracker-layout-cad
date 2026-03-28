@@ -11,9 +11,11 @@ namespace TrackerLayout.Services;
 ///   - Polyline3d       → ogni vertice della polilinea 3D
 ///   - Polyline (heavy) → ogni vertice con Z ≠ 0
 ///   - Face (3DFACE)    → triangoli/quad della mesh; usa interpolazione baricentrica (esatta)
+///   - SubDMesh         → vertici aggiunti all'IDW cloud
 ///
 /// Algoritmo:
 ///   1. Se il punto cade dentro un triangolo della mesh → interpolazione baricentrica (precisa)
+///      Accelerata da griglia spaziale 2D — O(1) medio invece di O(n)
 ///   2. Altrimenti → IDW (Inverse Distance Weighting) dai k punti più vicini
 /// </summary>
 public class TerrainInterpolator
@@ -23,6 +25,11 @@ public class TerrainInterpolator
 
     // Triangoli della mesh per interpolazione baricentrica
     private readonly List<(Point3d A, Point3d B, Point3d C)> _triangles = [];
+
+    // Griglia spaziale per accelerare la ricerca triangoli
+    private double   _gridMinX, _gridMinY, _gridCellSize;
+    private int      _gridCols, _gridRows;
+    private List<int>[]? _triGrid;  // per ogni cella: indici in _triangles
 
     private const int    KNeighbours = 6;
     private const double PowerParam  = 2.0;
@@ -38,6 +45,7 @@ public class TerrainInterpolator
     {
         _points.Clear();
         _triangles.Clear();
+        _triGrid = null;
 
         var modelSpace = (BlockTableRecord)tr.GetObject(
             SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
@@ -74,13 +82,7 @@ public class TerrainInterpolator
                     }
                     break;
 
-                // ── 3DFACE (mesh del terreno) ─────────────────────────────────
-                // Ogni Face AutoCAD ha 4 vertici (o 3 se è un triangolo, dove il 4°
-                // coincide con il 3°). Si aggiungono sia i vertici all'IDW cloud sia
-                // i triangoli per l'interpolazione baricentrica precisa.
-                // SubDMesh — mesh moderna AutoCAD (MESH command, CADmapper DXF, ecc.)
-                // Protetto da try/catch: alcune mesh DXF lanciano eInvalidIndex
-                // se la topologia interna non è pienamente risolta.
+                // ── SubDMesh — mesh moderna AutoCAD ──────────────────────────
                 case SubDMesh sdm:
                     try
                     {
@@ -91,7 +93,10 @@ public class TerrainInterpolator
                     catch { /* mesh non accessibile — skip */ }
                     break;
 
-                // 3DFACE — indici 1..4 (API AutoCAD)
+                // ── 3DFACE (mesh del terreno) ─────────────────────────────────
+                // Ogni Face AutoCAD ha 4 vertici (o 3 se è un triangolo, dove il 4°
+                // coincide con il 3°). Si aggiungono sia i vertici all'IDW cloud sia
+                // i triangoli per l'interpolazione baricentrica precisa.
                 case Face face:
                     Point3d v1 = face.GetVertexAt(1);
                     Point3d v2 = face.GetVertexAt(2);
@@ -102,10 +107,8 @@ public class TerrainInterpolator
                     _points.Add(v2);
                     _points.Add(v3);
 
-                    // Triangolo principale
                     _triangles.Add((A: v1, B: v2, C: v3));
 
-                    // Se quad (v4 ≠ v3) → aggiungi secondo triangolo
                     if (v4.DistanceTo(v3) > 1e-6)
                     {
                         _points.Add(v4);
@@ -114,7 +117,68 @@ public class TerrainInterpolator
                     break;
             }
         }
+
+        // Costruisce la griglia spaziale dopo aver caricato tutti i triangoli
+        if (_triangles.Count > 0)
+            BuildTriangleGrid();
     }
+
+    // ── Griglia spaziale per triangoli ──────────────────────────────────────
+
+    private void BuildTriangleGrid()
+    {
+        double xMin = double.MaxValue, xMax = double.MinValue;
+        double yMin = double.MaxValue, yMax = double.MinValue;
+
+        foreach (var tri in _triangles)
+        {
+            xMin = Math.Min(xMin, Math.Min(tri.A.X, Math.Min(tri.B.X, tri.C.X)));
+            xMax = Math.Max(xMax, Math.Max(tri.A.X, Math.Max(tri.B.X, tri.C.X)));
+            yMin = Math.Min(yMin, Math.Min(tri.A.Y, Math.Min(tri.B.Y, tri.C.Y)));
+            yMax = Math.Max(yMax, Math.Max(tri.A.Y, Math.Max(tri.B.Y, tri.C.Y)));
+        }
+
+        double dx = xMax - xMin;
+        double dy = yMax - yMin;
+        if (dx < 1e-6 || dy < 1e-6) return;
+
+        // ~50 triangoli per cella in media
+        int targetCells = Math.Max(4, _triangles.Count / 50);
+        double aspect   = dx / dy;
+        _gridCols = Math.Max(1, (int)Math.Sqrt(targetCells * aspect));
+        _gridRows = Math.Max(1, (int)Math.Sqrt(targetCells / aspect));
+
+        // Cellsize leggermente più grande per evitare triangoli su bordi di cella
+        _gridCellSize = Math.Max(dx / _gridCols, dy / _gridRows) * 1.01;
+        _gridMinX = xMin;
+        _gridMinY = yMin;
+
+        _triGrid = new List<int>[_gridCols * _gridRows];
+        for (int i = 0; i < _triGrid.Length; i++)
+            _triGrid[i] = [];
+
+        for (int ti = 0; ti < _triangles.Count; ti++)
+        {
+            var tri   = _triangles[ti];
+            double txMin = Math.Min(tri.A.X, Math.Min(tri.B.X, tri.C.X));
+            double txMax = Math.Max(tri.A.X, Math.Max(tri.B.X, tri.C.X));
+            double tyMin = Math.Min(tri.A.Y, Math.Min(tri.B.Y, tri.C.Y));
+            double tyMax = Math.Max(tri.A.Y, Math.Max(tri.B.Y, tri.C.Y));
+
+            int cLo = GridCol(txMin), cHi = GridCol(txMax);
+            int rLo = GridRow(tyMin), rHi = GridRow(tyMax);
+
+            for (int r = rLo; r <= rHi; r++)
+                for (int c = cLo; c <= cHi; c++)
+                    _triGrid[r * _gridCols + c].Add(ti);
+        }
+    }
+
+    private int GridCol(double x) =>
+        Math.Clamp((int)((x - _gridMinX) / _gridCellSize), 0, _gridCols - 1);
+
+    private int GridRow(double y) =>
+        Math.Clamp((int)((y - _gridMinY) / _gridCellSize), 0, _gridRows - 1);
 
     // ── Interpolazione quota Z ───────────────────────────────────────────────
 
@@ -129,9 +193,25 @@ public class TerrainInterpolator
         if (_points.Count == 0 && _triangles.Count == 0)
             return 0.0;
 
-        // 1. Prova l'interpolazione baricentrica sulla mesh
-        if (_triangles.Count > 0)
+        // 1. Ricerca baricentrica accelerata dalla griglia
+        if (_triGrid != null)
         {
+            int col = GridCol(x);
+            int row = GridRow(y);
+
+            if (col >= 0 && col < _gridCols && row >= 0 && row < _gridRows)
+            {
+                foreach (int ti in _triGrid[row * _gridCols + col])
+                {
+                    var tri = _triangles[ti];
+                    if (PointInTriangle2D(x, y, tri.A, tri.B, tri.C))
+                        return BarycentricZ(x, y, tri.A, tri.B, tri.C);
+                }
+            }
+        }
+        else if (_triangles.Count > 0)
+        {
+            // Griglia non disponibile (< soglia): scan lineare
             foreach (var tri in _triangles)
             {
                 if (PointInTriangle2D(x, y, tri.A, tri.B, tri.C))
