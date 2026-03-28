@@ -44,7 +44,9 @@ public class TerrainInterpolator
 
         foreach (ObjectId id in modelSpace)
         {
-            var entity = tr.GetObject(id, OpenMode.ForRead);
+            Entity entity;
+            try { entity = (Entity)tr.GetObject(id, OpenMode.ForRead); }
+            catch { continue; }   // entità non apribile (layer bloccato, proxy, ecc.)
 
             switch (entity)
             {
@@ -77,12 +79,16 @@ public class TerrainInterpolator
                 // coincide con il 3°). Si aggiungono sia i vertici all'IDW cloud sia
                 // i triangoli per l'interpolazione baricentrica precisa.
                 // SubDMesh — mesh moderna AutoCAD (MESH command, CADmapper DXF, ecc.)
-                // I vertici sono punti 3D; usiamo IDW (non baricentrico perché
-                // la topologia delle facce richiede accesso agli indici).
+                // Protetto da try/catch: alcune mesh DXF lanciano eInvalidIndex
+                // se la topologia interna non è pienamente risolta.
                 case SubDMesh sdm:
-                    foreach (Point3d vtx in sdm.Vertices)
-                        if (Math.Abs(vtx.Z) > 1e-6 || sdm.Vertices.Count < 4)
+                    try
+                    {
+                        var verts = sdm.Vertices;
+                        foreach (Point3d vtx in verts)
                             _points.Add(vtx);
+                    }
+                    catch { /* mesh non accessibile — skip */ }
                     break;
 
                 // 3DFACE — indici 1..4 (API AutoCAD)

@@ -52,8 +52,9 @@ public static class BlockHelper
             if (obj is BlockReference br && br.Name == BlockName)
             {
                 br.UpgradeOpen();
-                // Elimina prima gli AttributeReference associati
-                foreach (ObjectId attId in br.AttributeCollection)
+                // Colleziona prima, poi cancella — evita eInvalidIndex durante l'iterazione
+                var attIds = br.AttributeCollection.Cast<ObjectId>().ToList();
+                foreach (ObjectId attId in attIds)
                 {
                     var att = (AttributeReference)tr.GetObject(attId, OpenMode.ForWrite);
                     att.Erase();
