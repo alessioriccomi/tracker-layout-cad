@@ -94,26 +94,29 @@ public class TerrainInterpolator
                     break;
 
                 // ── 3DFACE (mesh del terreno) ─────────────────────────────────
-                // Ogni Face AutoCAD ha 4 vertici (o 3 se è un triangolo, dove il 4°
-                // coincide con il 3°). Si aggiungono sia i vertici all'IDW cloud sia
-                // i triangoli per l'interpolazione baricentrica precisa.
+                // API AutoCAD: GetVertexAt usa indici 0-based (0, 1, 2, 3).
+                // Ogni Face ha 4 vertici; se è un triangolo v3 == v2.
                 case Face face:
-                    Point3d v1 = face.GetVertexAt(1);
-                    Point3d v2 = face.GetVertexAt(2);
-                    Point3d v3 = face.GetVertexAt(3);
-                    Point3d v4 = face.GetVertexAt(4);
-
-                    _points.Add(v1);
-                    _points.Add(v2);
-                    _points.Add(v3);
-
-                    _triangles.Add((A: v1, B: v2, C: v3));
-
-                    if (v4.DistanceTo(v3) > 1e-6)
+                    try
                     {
-                        _points.Add(v4);
-                        _triangles.Add((A: v3, B: v4, C: v1));
+                        Point3d v0 = face.GetVertexAt(0);
+                        Point3d v1 = face.GetVertexAt(1);
+                        Point3d v2 = face.GetVertexAt(2);
+                        Point3d v3 = face.GetVertexAt(3);
+
+                        _points.Add(v0);
+                        _points.Add(v1);
+                        _points.Add(v2);
+
+                        _triangles.Add((A: v0, B: v1, C: v2));
+
+                        if (v3.DistanceTo(v2) > 1e-6)
+                        {
+                            _points.Add(v3);
+                            _triangles.Add((A: v2, B: v3, C: v0));
+                        }
                     }
+                    catch { /* topologia invalida — skip */ }
                     break;
             }
         }
