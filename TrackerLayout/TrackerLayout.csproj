@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>TrackerLayout</AssemblyName>
+    <RootNamespace>TrackerLayout</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <Platforms>x64</Platforms>
+    <!--
+      AutoCAD carica già accoremgd.dll e acdbmgd.dll nel suo processo.
+      ExcludeAssets="runtime" evita di copiare le DLL Autodesk nella
+      cartella di output, che causerebbe conflitti al NETLOAD.
+    -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <!-- Abilita WPF per il dialogo parametri -->
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      AutoCAD 2027 .NET API — versione interna 25.x (anno di rilascio Autodesk 2026).
+      AutoCAD.NET       → AcMgd.dll    (Application, DocumentManager, ShowModalWindow)
+      AutoCAD.NET.Core  → accoremgd.dll (CommandMethod, Editor, Database core)
+      AutoCAD.NET.Model → acdbmgd.dll  (entities, transactions, geometry)
+      ExcludeAssets="runtime" = solo riferimenti compile-time; AutoCAD carica già
+      queste DLL nel suo processo, copiarle in output causerebbe conflitti al NETLOAD.
+    -->
+    <PackageReference Include="AutoCAD.NET"       Version="25.*" ExcludeAssets="runtime" />
+    <PackageReference Include="AutoCAD.NET.Core"  Version="25.*" ExcludeAssets="runtime" />
+    <PackageReference Include="AutoCAD.NET.Model" Version="25.*" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>

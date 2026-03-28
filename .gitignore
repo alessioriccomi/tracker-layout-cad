@@ -1,0 +1,12 @@
+# Build output
+TrackerLayout/bin/
+TrackerLayout/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# Backup zip
+*.zip

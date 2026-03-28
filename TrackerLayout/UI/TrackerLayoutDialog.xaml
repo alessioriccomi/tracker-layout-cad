@@ -1,0 +1,422 @@
+<Window x:Class="TrackerLayout.UI.TrackerLayoutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:TrackerLayout.UI.ViewModels"
+        Title="TrackerLayout — Parametri impianto"
+        Width="560"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F5F5">
+
+    <Window.Resources>
+
+        <Style x:Key="ValidatedTextBox" TargetType="TextBox">
+            <Setter Property="Height"           Value="26"/>
+            <Setter Property="Padding"          Value="6,3"/>
+            <Setter Property="FontSize"         Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush"      Value="#AAAAAA"/>
+            <Setter Property="Background"       Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="True">
+                    <Setter Property="BorderBrush" Value="#D32F2F"/>
+                    <Setter Property="Background"  Value="#FFF3F3"/>
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={RelativeSource Self},
+                                   Path=(Validation.Errors)[0].ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ParamLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"          Value="13"/>
+            <Setter Property="FontWeight"        Value="SemiBold"/>
+            <Setter Property="Foreground"        Value="#333333"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin"            Value="0,0,8,0"/>
+        </Style>
+
+        <Style x:Key="UnitLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"          Value="12"/>
+            <Setter Property="Foreground"        Value="#777777"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin"            Value="6,0,0,0"/>
+        </Style>
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Margin"     Value="0,0,0,8"/>
+        </Style>
+
+        <Style x:Key="InfoLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"          Value="12"/>
+            <Setter Property="Foreground"        Value="#1565C0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Height"          Value="34"/>
+            <Setter Property="Padding"         Value="20,0"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="Background"      Value="#1565C0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled"   Value="False"><Setter Property="Background" Value="#90A4AE"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"> <Setter Property="Background" Value="#1976D2"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Height"          Value="34"/>
+            <Setter Property="Padding"         Value="20,0"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="Foreground"      Value="#333333"/>
+            <Setter Property="Background"      Value="White"/>
+            <Setter Property="BorderBrush"     Value="#AAAAAA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#EEEEEE"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <StackPanel>
+
+        <!-- ═══ Header ════════════════════════════════════════════════════════ -->
+        <Border Background="#1E3A5F" Padding="20,14">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Canvas Width="28" Height="28" Margin="0,0,12,0">
+                    <Ellipse Canvas.Left="7" Canvas.Top="7" Width="14" Height="14" Fill="#FFC107"/>
+                    <Line X1="14" Y1="0"  X2="14" Y2="5"  Stroke="#FFC107" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="14" Y1="23" X2="14" Y2="28" Stroke="#FFC107" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="0"  Y1="14" X2="5"  Y2="14" Stroke="#FFC107" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="23" Y1="14" X2="28" Y2="14" Stroke="#FFC107" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="3"  Y1="3"  X2="7"  Y2="7"  Stroke="#FFC107" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="21" Y1="21" X2="25" Y2="25" Stroke="#FFC107" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="25" Y1="3"  X2="21" Y2="7"  Stroke="#FFC107" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Line X1="3"  Y1="25" X2="7"  Y2="21" Stroke="#FFC107" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                </Canvas>
+                <StackPanel>
+                    <TextBlock Text="TrackerLayout"
+                               FontSize="17" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Posizionamento tracker monoassiali — Agrivoltaico"
+                               FontSize="11" Foreground="#90CAF9"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══ Corpo ══════════════════════════════════════════════════════════ -->
+        <Grid Margin="20,16,20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Colonna sinistra: parametri ───────────────────────────────── -->
+            <StackPanel Grid.Column="0">
+
+                <!-- ══ Sezione: Pannelli ══════════════════════════════════════ -->
+                <TextBlock Text="PANNELLI FOTOVOLTAICI" Style="{StaticResource SectionHeader}"/>
+
+                <!-- N° pannelli -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="N° pannelli per tracker" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding NumberOfPanels, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="pz" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Larghezza pannello -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Larghezza pannello" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding PanelWidth, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Altezza pannello -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Altezza pannello" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding PanelHeight, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Tipologia 1P / 2P -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Tipologia" Style="{StaticResource ParamLabel}"/>
+                    <ComboBox  Grid.Column="1" Height="26" FontSize="13"
+                               SelectedIndex="{Binding PanelTypeIndex}">
+                        <ComboBoxItem Content="1P — Singolo ritratto"/>
+                        <ComboBoxItem Content="2P — Doppio ritratto"/>
+                    </ComboBox>
+                </Grid>
+
+                <!-- Disposizione Longitudinale / Trasversale -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Disposizione pannelli" Style="{StaticResource ParamLabel}"/>
+                    <ComboBox  Grid.Column="1" Height="26" FontSize="13"
+                               SelectedIndex="{Binding PanelOrientationIndex}">
+                        <ComboBoxItem Content="Longitudinale (lato lungo // asse)"/>
+                        <ComboBoxItem Content="Trasversale (lato lungo ⊥ asse)"/>
+                    </ComboBox>
+                </Grid>
+
+                <!-- Riepilogo dimensioni calcolate -->
+                <Border Background="#E8F5E9" CornerRadius="4" Padding="10,6" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="Lunghezza tracker: " FontSize="12" Foreground="#555"/>
+                            <TextBlock Text="{Binding TrackerLengthInfo}" Style="{StaticResource InfoLabel}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <TextBlock Text="Larghezza tracker: " FontSize="12" Foreground="#555"/>
+                            <TextBlock Text="{Binding TrackerWidthInfo}" Style="{StaticResource InfoLabel}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Separatore -->
+                <Separator Margin="0,0,0,12" Background="#DDDDDD"/>
+
+                <!-- ══ Sezione: Geometria impianto ═══════════════════════════ -->
+                <TextBlock Text="GEOMETRIA IMPIANTO" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Pitch -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Pitch (interasse file)" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding Pitch, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Altezza hub -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Altezza hub tracker" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding TrackerHubHeight, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Azimut -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Azimut asse tracker" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding AzimuthDegrees, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="°" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Separatore -->
+                <Separator Margin="0,4,0,12" Background="#DDDDDD"/>
+
+                <!-- ══ Sezione: Fasce ════════════════════════════════════════ -->
+                <TextBlock Text="FASCE E CARRAIE" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Margine N/S -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Fascia manovra N/S" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding ManeuverMarginNS, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Carraie E/O -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Carraie laterali E/O" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding LateralMarginEW, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="m" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+
+                <!-- Separatore -->
+                <Separator Margin="0,4,0,12" Background="#DDDDDD"/>
+
+                <!-- ══ Sezione: Pendenza ══════════════════════════════════════ -->
+                <TextBlock Text="FILTRO PENDENZA TERRENO" Style="{StaticResource SectionHeader}"/>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Pendenza max" Style="{StaticResource ParamLabel}"/>
+                    <TextBox   Grid.Column="1"
+                               Style="{StaticResource ValidatedTextBox}"
+                               Text="{Binding MaxSlopeDegrees, UpdateSourceTrigger=PropertyChanged,
+                                      ValidatesOnDataErrors=True}"/>
+                    <TextBlock Grid.Column="2" Text="°" Style="{StaticResource UnitLabel}"/>
+                </Grid>
+                <TextBlock Text="(0 = nessun limite; le aree oltre la soglia vengono escluse)"
+                           FontSize="10" Foreground="#999999" Margin="170,0,0,4"/>
+
+            </StackPanel>
+
+            <!-- ── Bussola azimutale ───────────────────────────────────────── -->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Center"
+                        VerticalAlignment="Top" Margin="0,20,0,0">
+
+                <TextBlock Text="Azimut" FontSize="10" Foreground="#888888"
+                           HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
+                <Grid Width="100" Height="100">
+                    <Ellipse Fill="White" Stroke="#CCCCCC" StrokeThickness="1.5"/>
+                    <TextBlock Text="N" FontSize="10" FontWeight="Bold" Foreground="#1E3A5F"
+                               HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                    <TextBlock Text="S" FontSize="9" Foreground="#888888"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    <TextBlock Text="E" FontSize="9" Foreground="#888888"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="O" FontSize="9" Foreground="#888888"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                    <Canvas Width="100" Height="100">
+                        <Canvas.RenderTransform>
+                            <RotateTransform Angle="{Binding AzimuthDouble}" CenterX="50" CenterY="50"/>
+                        </Canvas.RenderTransform>
+                        <Line X1="50" Y1="50" X2="50" Y2="14"
+                              Stroke="#1565C0" StrokeThickness="2.5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Polygon Points="50,10 46,20 54,20" Fill="#1565C0"/>
+                        <Line X1="50" Y1="50" X2="50" Y2="82"
+                              Stroke="#AAAAAA" StrokeThickness="1.5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Ellipse Canvas.Left="46" Canvas.Top="46"
+                                 Width="8" Height="8"
+                                 Fill="White" Stroke="#1565C0" StrokeThickness="1.5"/>
+                    </Canvas>
+                </Grid>
+
+                <TextBlock FontSize="11" Foreground="#555555"
+                           HorizontalAlignment="Center" Margin="0,6,0,0">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0:F1}°">
+                            <Binding Path="AzimuthDouble"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock Text="da Nord" FontSize="9" Foreground="#AAAAAA"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+
+        </Grid>
+
+        <!-- ═══ Footer ════════════════════════════════════════════════════════ -->
+        <Border Background="#EEEEEE" BorderBrush="#DDDDDD"
+                BorderThickness="0,1,0,0" Padding="20,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annulla" Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,10,0" IsCancel="True"
+                        Click="OnCancelClick"/>
+                <Button Content="Avvia layout →" Style="{StaticResource PrimaryButton}"
+                        IsDefault="True"
+                        IsEnabled="{Binding Path=HasErrors, Converter={x:Static local:BoolNegateConverter.Instance}}"
+                        Click="OnConfirmClick"
+                        xmlns:local="clr-namespace:TrackerLayout.UI"/>
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</Window>
