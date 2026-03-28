@@ -76,6 +76,15 @@ public class TerrainInterpolator
                 // Ogni Face AutoCAD ha 4 vertici (o 3 se è un triangolo, dove il 4°
                 // coincide con il 3°). Si aggiungono sia i vertici all'IDW cloud sia
                 // i triangoli per l'interpolazione baricentrica precisa.
+                // SubDMesh — mesh moderna AutoCAD (MESH command, CADmapper DXF, ecc.)
+                // I vertici sono punti 3D; usiamo IDW (non baricentrico perché
+                // la topologia delle facce richiede accesso agli indici).
+                case SubDMesh sdm:
+                    foreach (Point3d vtx in sdm.Vertices)
+                        if (Math.Abs(vtx.Z) > 1e-6 || sdm.Vertices.Count < 4)
+                            _points.Add(vtx);
+                    break;
+
                 // 3DFACE — indici 1..4 (API AutoCAD)
                 case Face face:
                     Point3d v1 = face.GetVertexAt(1);
